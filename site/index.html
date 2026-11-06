@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DISHARI | দিশারী — AI vision in Bangla</title>
+<meta name="description" content="Take a photo and DISHARI describes your surroundings, reads text and identifies Taka notes in Bangla.">
+<meta name="theme-color" content="#1A2B7A">
+<link rel="icon" href="assets/favicon.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1A2B7A;--blue:#2F6BE0;--sky:#E8F0FD;--line:#CFDCF5;--ink:#0F172A;--muted:#4A5578;--amber:#B86A00;--ok:#1E7F4F;--bg:#F7F9FE;--warn:#9A3412;--warnbg:#FFF4E5;--fs:1}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font-family:"Hind Siliguri","Nirmala UI",system-ui,sans-serif;color:var(--ink);background:var(--bg);font-size:calc(17px * var(--fs));line-height:1.5}
+button,input,textarea{font:inherit}
+.wrap{max-width:560px;margin:0 auto;padding:12px 16px calc(28px + env(safe-area-inset-bottom))}
+header.top{position:sticky;top:0;z-index:5;background:rgba(247,249,254,.97);border-bottom:1px solid var(--line)}
+header.top .wrap{display:flex;align-items:center;justify-content:space-between;padding-top:calc(10px + env(safe-area-inset-top));padding-bottom:10px}
+.logo{height:26px;display:block}
+.tools{display:flex;gap:8px}
+.pill{border:1.5px solid var(--line);background:#fff;color:var(--navy);border-radius:999px;padding:6px 12px;font-weight:700;font-size:.85em;min-height:40px;cursor:pointer}
+.pill[aria-pressed="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}
+h1{font-size:1.65em;line-height:1.15;margin:18px 0 6px;color:var(--navy)}
+h1 span{color:var(--blue)}
+.sub{color:var(--muted);margin:0 0 16px}
+h2{font-size:1.1em;color:var(--navy);margin:22px 0 10px}
+.modes{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.mode{border:1.5px solid var(--line);background:#fff;border-radius:14px;padding:10px 4px;text-align:center;cursor:pointer;min-height:76px;color:var(--ink)}
+.mode .ic{font-size:1.5em;line-height:1;display:block;margin-bottom:4px}
+.mode b{font-size:.82em;display:block;line-height:1.2}
+.mode[aria-pressed="true"]{border-color:var(--blue);background:var(--sky);box-shadow:inset 0 0 0 1.5px var(--blue)}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:14px;padding:14px 12px;min-height:56px;font-weight:700;cursor:pointer;text-decoration:none}
+.btn.primary{background:var(--blue);color:#fff}
+.btn.secondary{background:#fff;color:var(--navy);border:1.5px solid var(--line)}
+.btn.ghost{background:transparent;color:var(--blue);border:1.5px solid var(--blue)}
+.btn:disabled{opacity:.55;cursor:default}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;cursor:pointer;text-align:left;padding:0;color:var(--ink)}
+.card img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:var(--sky)}
+.card div{padding:8px 10px 10px}
+.card b{display:block;font-size:.92em;line-height:1.25}
+.card small{color:var(--blue);font-weight:700;font-size:.75em}
+.note{font-size:.82em;color:var(--muted);margin-top:14px}
+.banner{background:var(--warnbg);border:1px solid #F5C98B;color:var(--warn);border-radius:12px;padding:10px 12px;font-size:.88em;margin-top:12px}
+/* result view */
+#result{display:none}
+.photo{position:relative;border-radius:18px;overflow:hidden;background:#dfe7f8;margin-top:12px}
+.photo img{width:100%;max-height:48vh;object-fit:contain;display:block;background:#0f1a3d}
+.tag{display:inline-block;font-size:.75em;font-weight:700;border-radius:999px;padding:3px 10px;margin-right:6px}
+.tag.tmode{background:var(--sky);color:var(--navy)}
+.tag.live{background:#E3F4EA;color:var(--ok)}
+.tag.cached{background:#E8F0FD;color:var(--blue)}
+.tag.demo{background:var(--warnbg);color:var(--warn)}
+.status{display:flex;align-items:center;gap:10px;margin:14px 0 6px;color:var(--navy);font-weight:600}
+.dot{width:12px;height:12px;border-radius:50%;background:var(--blue);animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.25;transform:scale(.7)}}
+.answer{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;margin-top:10px}
+.answer p{margin:6px 0 0;font-size:1.15em;line-height:1.55}
+.answer .en{font-size:.9em;color:var(--muted)}
+.big{font-size:2.6em;font-weight:700;color:var(--navy);line-height:1;margin:6px 0}
+.warncard{background:var(--warnbg);border:1px solid #F5C98B;border-radius:14px;padding:10px 12px;margin-top:10px;color:var(--warn);font-size:.9em}
+.items{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.items span{background:var(--sky);color:var(--navy);border-radius:999px;padding:3px 10px;font-size:.8em}
+.audio{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.audio .btn{flex:1;min-height:50px;padding:10px}
+.astat{font-size:.85em;color:var(--muted);margin-top:6px;min-height:1.4em}
+.ask{display:flex;gap:8px;margin-top:16px}
+.ask input{flex:1;min-width:0;border:1.5px solid var(--line);border-radius:14px;padding:12px;background:#fff;min-height:52px}
+.ask .icon{width:52px;flex:none;padding:0}
+.qs{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.qs button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;font-size:.85em;color:var(--navy);cursor:pointer;min-height:38px}
+.bottom{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+form.pilot{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px;display:grid;gap:10px}
+form.pilot input{border:1.5px solid var(--line);border-radius:12px;padding:12px;min-height:50px;width:100%}
+.hidden{position:absolute!important;left:-9999px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+:focus-visible{outline:3px solid #F5B041;outline-offset:2px;border-radius:10px}
+footer{color:var(--muted);font-size:.8em;margin-top:22px;text-align:center}
+@media (prefers-reduced-motion:reduce){.dot{animation:none}*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <img class="logo" src="assets/logo.png" alt="DISHARI">
+  <div class="tools">
+    <button class="pill" id="fsBtn" aria-label="Larger text">অ+</button>
+    <button class="pill" id="langBtn" aria-label="Switch language">EN</button>
+  </div>
+</div></header>
+
+<main class="wrap">
+  <!-- HOME -->
+  <section id="home" aria-labelledby="h1">
+    <h1 id="h1" data-t="title"></h1>
+    <p class="sub" data-t="subtitle"></p>
+    <div id="demoBanner" class="banner" hidden data-t="demoBanner"></div>
+
+    <h2 id="modeLabel" data-t="chooseMode"></h2>
+    <div class="modes" role="group" aria-labelledby="modeLabel">
+      <button class="mode" data-mode="scene" aria-pressed="true"><span class="ic" aria-hidden="true">👁️</span><b data-t="m_scene"></b></button>
+      <button class="mode" data-mode="taka" aria-pressed="false"><span class="ic" aria-hidden="true">৳</span><b data-t="m_taka"></b></button>
+      <button class="mode" data-mode="text" aria-pressed="false"><span class="ic" aria-hidden="true">📖</span><b data-t="m_text"></b></button>
+      <button class="mode" data-mode="obstacle" aria-pressed="false"><span class="ic" aria-hidden="true">⚠️</span><b data-t="m_obstacle"></b></button>
+    </div>
+    <div class="actions">
+      <label class="btn primary" for="cam"><span aria-hidden="true">📷</span><span data-t="takePhoto"></span></label>
+      <label class="btn secondary" for="gal"><span aria-hidden="true">🖼️</span><span data-t="upload"></span></label>
+    </div>
+    <input id="cam" class="hidden" type="file" accept="image/*" capture="environment">
+    <input id="gal" class="hidden" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/*">
+
+    <h2 data-t="trySamples"></h2>
+    <div class="grid" id="samples"></div>
+
+    <p class="note" data-t="privacy"></p>
+
+    <h2 data-t="pilotTitle"></h2>
+    <form class="pilot" name="pilot" method="POST" data-netlify="true" netlify-honeypot="company" id="pilotForm">
+      <input type="hidden" name="form-name" value="pilot">
+      <p class="hidden"><label>Company <input name="company"></label></p>
+      <label><span class="sr" data-t="pName"></span><input name="name" required autocomplete="name" data-ph="pName"></label>
+      <label><span class="sr" data-t="pContact"></span><input name="contact" required autocomplete="tel" data-ph="pContact"></label>
+      <button class="btn primary" type="submit" data-t="pSubmit"></button>
+      <div id="pilotMsg" role="status" class="note"></div>
+    </form>
+    <footer><span data-t="footer"></span><br><span id="credits"></span></footer>
+  </section>
+
+  <!-- RESULT -->
+  <section id="result" aria-labelledby="rtitle">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
+      <button class="pill" id="backBtn" data-t="back"></button>
+      <span id="tags"></span>
+    </div>
+    <h2 id="rtitle" class="sr" data-t="resultTitle"></h2>
+    <div class="photo"><img id="rimg" alt=""></div>
+    <div class="status" id="status" role="status" aria-live="polite"><span class="dot" aria-hidden="true"></span><span data-t="looking"></span></div>
+    <div class="answer" id="answer" hidden aria-live="polite">
+      <div id="bigVal" class="big" hidden></div>
+      <p id="sayMain"></p>
+      <p id="saySub" class="en"></p>
+      <div id="items" class="items"></div>
+      <div id="warn" class="warncard" hidden></div>
+      <div class="audio">
+        <button class="btn primary" id="playBtn"><span aria-hidden="true">🔊</span><span data-t="listen"></span></button>
+        <button class="btn secondary" id="stopBtn"><span aria-hidden="true">■</span><span data-t="stop"></span></button>
+      </div>
+      <div class="astat" id="astat" role="status" aria-live="polite"></div>
+    </div>
+
+    <div id="askBox" hidden>
+      <form class="ask" id="askForm">
+        <label class="sr" for="q" data-t="askLabel"></label>
+        <input id="q" autocomplete="off" data-ph="askPh">
+        <button type="button" class="btn secondary icon" id="micBtn" aria-label="Speak your question">🎤</button>
+        <button type="submit" class="btn primary icon" aria-label="Ask">➤</button>
+      </form>
+      <div class="qs" id="quickQs"></div>
+    </div>
+
+    <div class="bottom">
+      <label class="btn primary" for="cam"><span aria-hidden="true">📷</span><span data-t="another"></span></label>
+      <button class="btn secondary" id="homeBtn" data-t="home"></button>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+"use strict";
+// ---------- text ----------
+const T = {
+  bn: {
+    title: 'দিশারীর চোখে <span>দেখুন</span>', subtitle: 'ছবি তুলুন। দিশারী বাংলায় বলে দেবে আপনার চারপাশে কী আছে।',
+    chooseMode: '১. কী জানতে চান?', m_scene: 'চারপাশ', m_taka: 'টাকা চিনুন', m_text: 'লেখা পড়ুন', m_obstacle: 'বাধা খুঁজুন',
+    takePhoto: 'ছবি তুলুন', upload: 'গ্যালারি থেকে', trySamples: '২. অথবা ঢাকার নমুনা ছবিতে চেষ্টা করুন',
+    privacy: 'আপনার ছবি শুধু বিশ্লেষণের জন্য AI-তে পাঠানো হয় এবং আমরা তা সংরক্ষণ করি না। এটি একটি ডেমো, তাই চলাফেরায় আপনার সাদা ছড়ি বা অন্যান্য সহায়ক ব্যবহার চালিয়ে যান।',
+    demoBanner: 'AI এখন সংযুক্ত নেই। নমুনা ছবিতে আগে থেকে তৈরি ডেমো উত্তর দেখানো হবে।',
+    pilotTitle: 'দিশারী পাইলটে যোগ দিন', pName: 'আপনার নাম', pContact: 'ফোন নম্বর বা ইমেইল', pSubmit: 'যোগ দিন',
+    pThanks: 'ধন্যবাদ! আমরা শিগগিরই যোগাযোগ করব।', pFail: 'পাঠানো যায়নি। আবার চেষ্টা করুন।',
+    footer: 'দিশারী · GP FutureMakers 2026', back: '← ফিরে যান', resultTitle: 'ফলাফল', looking: 'দিশারী ছবিটি দেখছে…',
+    listen: 'শুনুন', stop: 'থামান', another: 'আরেকটি ছবি', home: 'হোম',
+    askLabel: 'ছবি সম্পর্কে প্রশ্ন করুন', askPh: 'প্রশ্ন করুন, যেমন: ডান পাশে কী আছে?',
+    quick: ['আমার সামনে কী আছে?', 'ডান পাশে কী আছে?', 'এখানে কী লেখা আছে?', 'কতজন মানুষ আছে?'],
+    live: 'লাইভ AI', cached: 'AI বিশ্লেষণ (আগে তৈরি)', demo: 'নমুনা ডেমো',
+    modeName: { scene: 'চারপাশ', taka: 'টাকা', text: 'লেখা', obstacle: 'বাধা', ask: 'প্রশ্ন' },
+    errBusy: 'অনেকে একসাথে চেষ্টা করছেন। কয়েক সেকেন্ড পর আবার চেষ্টা করুন।', errGeneric: 'দুঃখিত, এখন বিশ্লেষণ করা যাচ্ছে না। আবার চেষ্টা করুন।',
+    errImage: 'ছবিটি খোলা যায়নি। অন্য একটি ছবি চেষ্টা করুন।', obstacleNote: 'এটি ছবিভিত্তিক ডেমো, নিরাপদ পথ নিশ্চিত করে না। আপনার সাদা ছড়ি ব্যবহার চালিয়ে যান।',
+    aLoading: 'কণ্ঠ তৈরি হচ্ছে…', aPlaying: 'বাজছে…', aTap: 'শুনতে "শুনুন" চাপুন', aNone: 'এই ফোনে বাংলা কণ্ঠ পাওয়া যায়নি। লেখাটি পড়ুন।', aStopped: '',
+    larger: 'বড় লেখা', micNo: 'এই ব্রাউজারে কণ্ঠে প্রশ্ন করা যায় না। লিখে প্রশ্ন করুন।', micOn: 'বলুন, শুনছি…',
+  },
+  en: {
+    title: 'See through <span>DISHARI</span>', subtitle: 'Take a photo. DISHARI describes your world in Bangla.',
+    chooseMode: '1. What do you want to know?', m_scene: 'Surroundings', m_taka: 'Taka notes', m_text: 'Read text', m_obstacle: 'Obstacles',
+    takePhoto: 'Take a photo', upload: 'Upload image', trySamples: '2. Or try a Dhaka sample image',
+    privacy: 'Your photo is sent to the AI only for analysis and is not stored by us. This is a demo; keep using your white cane or usual mobility aids.',
+    demoBanner: 'AI is not connected right now. Sample images will show prepared demo answers.',
+    pilotTitle: 'Join the DISHARI pilot', pName: 'Your name', pContact: 'Phone number or email', pSubmit: 'Join',
+    pThanks: 'Thank you! We will be in touch soon.', pFail: 'Could not send. Please try again.',
+    footer: 'DISHARI · GP FutureMakers 2026', back: '← Back', resultTitle: 'Result', looking: 'DISHARI is looking at your image…',
+    listen: 'Listen', stop: 'Stop', another: 'Another photo', home: 'Home',
+    askLabel: 'Ask about this image', askPh: 'Ask, e.g. What is on the right?',
+    quick: ['What is in front of me?', 'What is on the right?', 'What does the text say?', 'How many people are there?'],
+    live: 'Live AI', cached: 'AI analysis (prepared)', demo: 'Sample demo',
+    modeName: { scene: 'Surroundings', taka: 'Taka', text: 'Text', obstacle: 'Obstacles', ask: 'Question' },
+    errBusy: 'Many people are trying at once. Please try again in a few seconds.', errGeneric: 'Sorry, analysis is not available right now. Please try again.',
+    errImage: 'Could not open this image. Try another one.', obstacleNote: 'Photo-based demo only; it does not confirm a safe path. Keep using your white cane.',
+    aLoading: 'Preparing voice…', aPlaying: 'Playing…', aTap: 'Tap "Listen" to hear it', aNone: 'No voice available on this phone. Please read the text.', aStopped: '',
+    larger: 'Larger text', micNo: 'Voice questions are not supported in this browser. Please type.', micOn: 'Speak now…',
+  },
+};
+
+// ---------- samples (add a photo to /samples and one line here) ----------
+const SAMPLES = [
+  { id: 'dhaka-street', img: 'samples/dhaka-hatirpool.jpg', mode: 'scene', bn: 'ঢাকার রাস্তা', en: 'Dhaka street',
+    demo: { bn: 'আপনার সামনে একটি চওড়া রাস্তা। বাম পাশে কয়েকটি সবুজ সিএনজি আর রিকশা দাঁড়িয়ে আছে। রাস্তার মাঝখানে একজন মানুষ হাঁটছেন। দুই পাশে গাছ আর দোকান দেখা যাচ্ছে।', en: 'A wide road is in front of you. On the left, several green CNGs and rickshaws are parked. A person is walking in the middle of the road. Trees and shops line both sides.' },
+    credit: 'Afifa Afrin, CC BY-SA 4.0' },
+  { id: 'dhaka-rickshaw', img: 'samples/dhaka-highcourt.jpg', mode: 'obstacle', bn: 'রিকশার সারি', en: 'Rickshaws ahead',
+    demo: { bn: 'রাস্তার সামনে অনেকগুলো রিকশা সারি বেঁধে আছে, রিকশায় যাত্রী বসে আছেন। পথটি রিকশায় ভরা, তাই সাবধানে চলুন।', en: 'Many rickshaws with passengers fill the road ahead. The way is crowded with rickshaws, so move carefully.' },
+    credit: 'Biswarup Ganguly, CC BY 3.0' },
+  { id: 'taka-1000', img: 'samples/taka1000.jpg', mode: 'taka', bn: '১০০০ টাকার নোট', en: '1,000 taka note',
+    demo: { bn: 'এটা এক হাজার টাকার নোট।', en: 'This is a 1000 taka note.', notes: [1000] }, credit: 'Team DISHARI' },
+];
+
+// ---------- state ----------
+let lang = localStorage.getItem('d_lang') || 'bn';
+let fs = Number(localStorage.getItem('d_fs') || 1);
+let mode = 'scene';
+let current = null; // { image(base64)|null, sampleId|null, mode }
+let lastSay = { bn: '', en: '' };
+let aiOk = true;
+const $ = (id) => document.getElementById(id);
+const t = (k) => T[lang][k];
+
+function applyLang() {
+  document.documentElement.lang = lang === 'bn' ? 'bn' : 'en';
+  document.querySelectorAll('[data-t]').forEach((el) => { const v = t(el.dataset.t); if (v !== undefined) el.innerHTML = v; });
+  document.querySelectorAll('[data-ph]').forEach((el) => (el.placeholder = t(el.dataset.ph)));
+  $('langBtn').textContent = lang === 'bn' ? 'EN' : 'বাংলা';
+  $('fsBtn').setAttribute('aria-label', t('larger')); $('fsBtn').textContent = lang === 'bn' ? 'অ+' : 'A+';
+  renderSamples(); renderQuick();
+}
+function applyFs() { document.documentElement.style.setProperty('--fs', fs); $('fsBtn').setAttribute('aria-pressed', fs > 1 ? 'true' : 'false'); }
+
+function renderSamples() {
+  const g = $('samples'); g.innerHTML = '';
+  SAMPLES.forEach((s) => {
+    const b = document.createElement('button'); b.className = 'card'; b.type = 'button';
+    b.setAttribute('aria-label', `${s[lang]}: ${t('modeName')[s.mode]}`);
+    b.innerHTML = `<img src="${s.img}" alt="" loading="lazy"><div><b>${s[lang]}</b><small>${t('modeName')[s.mode]}</small></div>`;
+    b.addEventListener('click', () => { unlockAudio(); startSample(s); });
+    g.appendChild(b);
+  });
+  $('credits').textContent = 'Photos: ' + SAMPLES.map((s) => s.credit).filter((v, i, a) => a.indexOf(v) === i).join(' · ');
+}
+function renderQuick() {
+  const q = $('quickQs'); q.innerHTML = '';
+  t('quick').forEach((txt) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = txt; b.addEventListener('click', () => { unlockAudio(); ask(txt); }); q.appendChild(b); });
+}
+
+// ---------- views ----------
+function show(view) {
+  $('home').style.display = view === 'home' ? 'block' : 'none';
+  $('result').style.display = view === 'result' ? 'block' : 'none';
+  window.scrollTo(0, 0);
+  if (view === 'result') $('backBtn').focus({ preventScroll: true });
+}
+function setLoading(on) {
+  $('status').style.display = on ? 'flex' : 'none';
+  if (on) { $('answer').hidden = true; }
+}
+function setTags(m, source) {
+  const cls = source === 'live' ? 'live' : source === 'cached' ? 'cached' : 'demo';
+  $('tags').innerHTML = `<span class="tag tmode">${t('modeName')[m]}</span>` + (source ? `<span class="tag ${cls}">${t(cls)}</span>` : '');
+}
+
+// ---------- image handling ----------
+async function compress(file) {
+  const max = 1280;
+  let bmp;
+  try { bmp = await createImageBitmap(file, { imageOrientation: 'from-image' }); }
+  catch { bmp = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = URL.createObjectURL(file); }); }
+  const w = bmp.width, h = bmp.height, k = Math.min(1, max / Math.max(w, h));
+  const c = document.createElement('canvas'); c.width = Math.round(w * k); c.height = Math.round(h * k);
+  c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+  return c.toDataURL('image/jpeg', 0.82);
+}
+async function onFile(e) {
+  const f = e.target.files && e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  unlockAudio();
+  show('result'); setTags(mode, null); setLoading(true); $('askBox').hidden = true;
+  let dataUrl;
+  try { dataUrl = await compress(f); } catch { return showError(t('errImage')); }
+  $('rimg').src = dataUrl; $('rimg').alt = t('resultTitle');
+  current = { image: dataUrl.split(',')[1], sampleId: null, mode };
+  analyze(current);
+}
+$('cam').addEventListener('change', onFile);
+$('gal').addEventListener('change', onFile);
+
+function startSample(s) {
+  show('result'); setTags(s.mode, null); setLoading(true); $('askBox').hidden = true;
+  $('rimg').src = s.img; $('rimg').alt = s[lang];
+  current = { image: null, sampleId: s.id, mode: s.mode, sample: s };
+  analyze(current);
+}
+
+// ---------- API ----------
+async function api(body, timeout = 25000) {
+  const ctrl = new AbortController(); const tm = setTimeout(() => ctrl.abort(), timeout);
+  try {
+    const r = await fetch('/api/vision', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: ctrl.signal });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw Object.assign(new Error(d.error || 'error'), { code: d.error || r.status });
+    return d;
+  } finally { clearTimeout(tm); }
+}
+async function analyze(c) {
+  try {
+    const d = await api({ mode: c.mode, sampleId: c.sampleId, image: c.image });
+    showAnswer(d, d.source);
+  } catch (err) {
+    if (c.sample) return showAnswer({ mode: c.mode, say_bn: c.sample.demo.bn, say_en: c.sample.demo.en, notes: c.sample.demo.notes, confident: true }, 'demo');
+    showError(err.code === 'rate_limited' ? t('errBusy') : t('errGeneric'));
+  }
+}
+async function ask(question) {
+  if (!current || !question.trim()) return;
+  stopAudio(); setTags('ask', null); setLoading(true);
+  let image = current.image;
+  try {
+    const d = await api({ mode: 'ask', question, image, sampleId: current.sampleId });
+    showAnswer(d, d.source);
+  } catch (err) { showError(err.code === 'rate_limited' ? t('errBusy') : t('errGeneric')); }
+}
+
+function showAnswer(d, source) {
+  setLoading(false); setTags(d.mode, source);
+  lastSay = { bn: d.say_bn || '', en: d.say_en || '' };
+  const main = lang === 'bn' ? lastSay.bn : (lastSay.en || lastSay.bn);
+  const sub = lang === 'bn' ? lastSay.en : '';
+  $('sayMain').textContent = main; $('saySub').textContent = sub;
+  const big = $('bigVal');
+  if (d.mode === 'taka' && d.notes && d.notes.length) { big.hidden = false; big.textContent = '৳' + (d.total || d.notes.reduce((a, b) => a + b, 0)).toLocaleString('en-IN'); }
+  else big.hidden = true;
+  $('items').innerHTML = (d.items || []).slice(0, 8).map((x) => `<span>${x.replace(/[<>&]/g, '')}</span>`).join('');
+  const w = $('warn');
+  if (d.mode === 'obstacle') { w.hidden = false; w.textContent = (d.warning ? d.warning + ' ' : '') + t('obstacleNote'); }
+  else if (d.warning) { w.hidden = false; w.textContent = d.warning; }
+  else w.hidden = true;
+  $('answer').hidden = false; $('askBox').hidden = false;
+  speak();
+}
+function showError(msg) {
+  setLoading(false);
+  lastSay = { bn: '', en: '' };
+  $('bigVal').hidden = true; $('items').innerHTML = ''; $('warn').hidden = true; $('saySub').textContent = '';
+  $('sayMain').textContent = msg; $('answer').hidden = false; $('askBox').hidden = !current;
+  $('astat').textContent = '';
+}
+
+// ---------- audio ----------
+const player = new Audio(); player.preload = 'auto';
+let unlocked = false, audioUrl = null, speakToken = 0;
+const SILENT = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAA=';
+function unlockAudio() {
+  if (unlocked) return; unlocked = true;
+  try { player.src = SILENT; const p = player.play(); if (p) p.catch(() => {}); } catch {}
+  try { if ('speechSynthesis' in window) speechSynthesis.getVoices(); } catch {}
+}
+function stopAudio() {
+  speakToken++; try { player.pause(); } catch {}
+  try { if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch {}
+  $('astat').textContent = '';
+}
+async function speak() {
+  const text = lang === 'bn' ? lastSay.bn : (lastSay.en || lastSay.bn);
+  const sl = lang === 'bn' || !lastSay.en ? 'bn' : 'en';
+  if (!text) return;
+  stopAudio(); const my = ++speakToken;
+  $('astat').textContent = t('aLoading');
+  try {
+    const ctrl = new AbortController(); const tm = setTimeout(() => ctrl.abort(), 25000);
+    const r = await fetch('/api/tts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, lang: sl }), signal: ctrl.signal });
+    clearTimeout(tm);
+    if (!r.ok) throw new Error('tts');
+    const blob = await r.blob(); if (my !== speakToken) return;
+    if (audioUrl) URL.revokeObjectURL(audioUrl);
+    audioUrl = URL.createObjectURL(blob); player.src = audioUrl;
+    await player.play(); $('astat').textContent = t('aPlaying');
+    player.onended = () => { if (my === speakToken) $('astat').textContent = ''; };
+  } catch (e) {
+    if (my !== speakToken) return;
+    if (audioUrl && player.src === audioUrl && e && e.name === 'NotAllowedError') { $('astat').textContent = t('aTap'); return; }
+    browserSpeak(text, sl, my);
+  }
+}
+function browserSpeak(text, sl, my) {
+  if (!('speechSynthesis' in window)) { $('astat').textContent = t('aNone'); return; }
+  const voices = speechSynthesis.getVoices();
+  const v = voices.find((x) => x.lang && x.lang.toLowerCase().startsWith(sl === 'bn' ? 'bn' : 'en'));
+  if (sl === 'bn' && !v) { $('astat').textContent = t('aNone'); return; }
+  const u = new SpeechSynthesisUtterance(text); if (v) u.voice = v; u.lang = sl === 'bn' ? 'bn-BD' : 'en-US'; u.rate = 0.95;
+  u.onend = () => { if (my === speakToken) $('astat').textContent = ''; };
+  speechSynthesis.speak(u); $('astat').textContent = t('aPlaying');
+}
+$('playBtn').addEventListener('click', () => {
+  unlockAudio();
+  if (audioUrl && player.src === audioUrl && player.paused && $('astat').textContent === t('aTap')) { player.play().then(() => ($('astat').textContent = t('aPlaying'))).catch(() => speak()); return; }
+  speak();
+});
+$('stopBtn').addEventListener('click', stopAudio);
+
+// ---------- ask (text + voice) ----------
+$('askForm').addEventListener('submit', (e) => { e.preventDefault(); unlockAudio(); const q = $('q').value; $('q').value = ''; ask(q); });
+$('micBtn').addEventListener('click', () => {
+  unlockAudio();
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { $('astat').textContent = t('micNo'); return; }
+  const rec = new SR(); rec.lang = lang === 'bn' ? 'bn-BD' : 'en-US'; rec.interimResults = false; rec.maxAlternatives = 1;
+  $('astat').textContent = t('micOn');
+  rec.onresult = (ev) => { const q = ev.results[0][0].transcript; $('q').value = q; ask(q); };
+  rec.onerror = () => { $('astat').textContent = t('micNo'); };
+  try { rec.start(); } catch { $('astat').textContent = t('micNo'); }
+});
+
+// ---------- navigation and settings ----------
+document.querySelectorAll('.mode').forEach((b) => b.addEventListener('click', () => {
+  mode = b.dataset.mode; document.querySelectorAll('.mode').forEach((x) => x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));
+}));
+$('backBtn').addEventListener('click', () => { stopAudio(); show('home'); });
+$('homeBtn').addEventListener('click', () => { stopAudio(); show('home'); });
+$('langBtn').addEventListener('click', () => { lang = lang === 'bn' ? 'en' : 'bn'; localStorage.setItem('d_lang', lang); applyLang(); if ($('result').style.display === 'block' && lastSay.bn) { $('sayMain').textContent = lang === 'bn' ? lastSay.bn : (lastSay.en || lastSay.bn); $('saySub').textContent = lang === 'bn' ? lastSay.en : ''; } });
+$('fsBtn').addEventListener('click', () => { fs = fs > 1 ? 1 : 1.2; localStorage.setItem('d_fs', fs); applyFs(); });
+
+// ---------- pilot sign-up (Netlify Forms) ----------
+$('pilotForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  try {
+    const r = await fetch('/', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(fd).toString() });
+    if (!r.ok) throw 0; e.target.reset(); $('pilotMsg').textContent = t('pThanks');
+  } catch { $('pilotMsg').textContent = t('pFail'); }
+});
+
+// ---------- start ----------
+applyLang(); applyFs(); show('home');
+fetch('/api/vision').then((r) => r.json()).then((d) => { aiOk = !!d.ok; $('demoBanner').hidden = aiOk; }).catch(() => { aiOk = false; $('demoBanner').hidden = false; });
+
+// Warm-up: open /?warm=1 once before the event to prepare sample answers and voices.
+if (new URLSearchParams(location.search).get('warm') === '1') {
+  (async () => {
+    const log = (m) => { $('pilotMsg').textContent = m; console.log(m); };
+    for (const s of SAMPLES) {
+      try {
+        const d = await api({ mode: s.mode, sampleId: s.id }, 40000);
+        for (const l of ['bn', 'en']) await fetch('/api/tts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: l === 'bn' ? d.say_bn : d.say_en, lang: l }) });
+        log(`Warmed: ${s.id} (${d.source})`);
+      } catch (e) { log(`Failed: ${s.id} (${e.code || e.message})`); }
+    }
+    log('Warm-up finished.');
+  })();
+}
+})();
+</script>
+</body>
+</html>

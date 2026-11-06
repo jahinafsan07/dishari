@@ -1,0 +1,7 @@
+{
+  "name": "dishari-web",
+  "private": true,
+  "type": "module",
+  "scripts": { "test": "node --test tests/core.test.mjs" },
+  "dependencies": { "@netlify/blobs": "^8.1.0" }
+}

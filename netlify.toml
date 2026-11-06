@@ -1,8 +1,16 @@
 [build]
-  publish = "."
+  publish = "site"
   functions = "netlify/functions"
 
+[functions]
+  node_bundler = "esbuild"
+
 [[headers]]
-  for = "/*"
+  for = "/samples/*"
   [headers.values]
-    Permissions-Policy = "camera=(self), microphone=(self), geolocation=(self)"
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
