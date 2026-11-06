@@ -6,7 +6,7 @@ export const json = (obj, status = 200, extra = {}) =>
 
 const list = (env, fallback) => (env ? env.split(",").map((s) => s.trim()).filter(Boolean) : fallback);
 
-export const VISION_MODELS = () => list(process.env.GEMINI_MODEL, ["gemini-flash-latest", "gemini-3.5-flash", "gemini-3.1-flash-lite", "gemini-flash-lite-latest"]);
+export const VISION_MODELS = () => list(process.env.GEMINI_MODEL, ["gemini-3.1-flash-lite", "gemini-flash-lite-latest", "gemini-flash-latest", "gemini-3.5-flash"]);
 export const TTS_MODELS = () => list(process.env.GEMINI_TTS_MODEL, ["gemini-3.1-flash-tts-preview", "gemini-2.5-flash-preview-tts", "gemini-2.5-pro-preview-tts"]);
 
 // ---- cache (Netlify Blobs when available; silently skipped elsewhere) ----
@@ -42,7 +42,9 @@ export async function gemini(models, body, timeoutMs = 15000) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) return { error: "not_configured" };
   let last = "unavailable";
+  const started = Date.now();
   for (const model of models) {
+    if (Date.now() - started > 18000) break; // stay within the hosting time limit
     try {
       const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
         method: "POST", signal: AbortSignal.timeout(timeoutMs),

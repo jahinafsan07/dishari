@@ -65,3 +65,18 @@ test("tts converts PCM to playable WAV (mocked)", async () => {
   assert.equal(r.headers.get("Content-Type"), "audio/wav");
   const b = Buffer.from(await r.arrayBuffer()); assert.equal(b.toString("ascii", 0, 4), "RIFF"); assert.equal(b.length, 9644);
 });
+
+test("auto mode: banknote photo answers with the taka sentence (mocked)", async () => {
+  process.env.GEMINI_API_KEY = "test";
+  const orig = global.fetch;
+  global.fetch = async () => new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify({ say_bn: "একটি নোট", say_en: "a note", confident: true, notes: [500] }) }] } }] }), { status: 200 });
+  const d = await (await vision(req({ mode: "auto", image: img }))).json(); global.fetch = orig;
+  assert.equal(d.say_bn, "এটা পাঁচশ টাকার নোট।"); assert.equal(d.mode, "taka");
+});
+test("auto mode: normal photo keeps the description (mocked)", async () => {
+  process.env.GEMINI_API_KEY = "test";
+  const orig = global.fetch;
+  global.fetch = async () => new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify({ say_bn: "সামনে একটি টেবিল আছে।", say_en: "A table is in front.", confident: true, notes: [] }) }] } }] }), { status: 200 });
+  const d = await (await vision(req({ mode: "auto", image: img }))).json(); global.fetch = orig;
+  assert.equal(d.say_bn, "সামনে একটি টেবিল আছে।"); assert.equal(d.mode, "auto");
+});

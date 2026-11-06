@@ -7,13 +7,12 @@ const SAMPLES = {
   "dhaka-street": "/samples/dhaka-hatirpool.jpg",
   "dhaka-rickshaw": "/samples/dhaka-highcourt.jpg",
   "taka-1000": "/samples/taka1000.jpg",
-  "taka-500": "/samples/taka500.jpg",
-  "taka-100": "/samples/taka100.jpg",
-  "sign": "/samples/sign.jpg",
-  "obstacle": "/samples/obstacle.jpg",
-  "indoor": "/samples/indoor.jpg",
+  "metro-farmgate": "/samples/metro-farmgate.jpg",
+  "pharmacy-sign": "/samples/pharmacy-sign.jpg",
+  "prothomalo": "/samples/prothomalo.jpg",
+  "footpath-obstacle": "/samples/footpath-obstacle.jpg",
 };
-const MODES = ["scene", "taka", "text", "obstacle", "ask"];
+const MODES = ["auto", "scene", "taka", "text", "obstacle", "ask"];
 const MAX_BODY = 3_500_000;
 
 const BASE = `You are DISHARI, an assistive vision companion for blind and visually impaired people in Bangladesh.
@@ -25,6 +24,11 @@ Rules:
 - If the photo is too dark, blurry or unclear for the task, set confident to false and politely ask the user to take the photo again.`;
 
 const TASK = {
+  auto: `Task: first decide what the photo mainly shows, then answer in that way.
+(a) Bangladeshi taka banknote(s): list each clearly visible note's value in notes (for example [500]); if unsure, notes = [] and confident = false. Never judge if a note is genuine.
+(b) Mainly text (a sign, document, label, newspaper or screen): start say_bn with "এখানে লেখা আছে:" and read the main text as written; do not guess hidden words. For a newspaper, read the name and the main headlines.
+(c) Anything else: describe the surroundings in 2 to 4 short sentences, safety-relevant things first (vehicles, holes, steps, obstacles), then people, then the place.
+Leave notes empty unless the photo shows banknotes. List the main things you see in items.`,
   scene: `Task: describe the surroundings for someone who cannot see them, in 2 to 4 short sentences. Put safety-relevant things first (vehicles, open holes, steps, obstacles), then people, then the general place. List the main things you see in items.`,
   obstacle: `Task: identify hazards for a person walking: open manholes or drains, broken footpath, steps, vehicles or objects blocking the way, construction, hanging objects. Start with the most important hazard and its rough position in the photo (left, centre or right). End say_bn with "সাবধানে চলুন।" when there is a hazard. If no clear hazard is visible, say that no obvious hazard is visible in this photo, without saying the path is safe. Put each hazard in items.`,
   text: `Task: read the visible text exactly as written (Bangla or English), in natural reading order. Start say_bn with "এখানে লেখা আছে:" followed by the text as written. If some words are hidden or blurry, say that part is not readable instead of guessing. For medicine labels, only read the text; give no medical advice. Put each separate line of text in items.`,
@@ -56,6 +60,10 @@ export function shape(mode, raw) {
     warning: clean(raw.warning, 200),
     confident: raw.confident !== false,
   };
+  if (mode === "auto") {
+    const t = raw.confident === false ? null : takaSentences(raw.notes);
+    if (t) Object.assign(out, { say_bn: t.bn, say_en: t.en, notes: t.notes, total: t.total, mode: "taka" });
+  }
   if (mode === "taka") {
     const t = raw.confident === false ? null : takaSentences(raw.notes);
     if (t) Object.assign(out, { say_bn: t.bn, say_en: t.en, notes: t.notes, total: t.total, confident: true });
@@ -83,7 +91,7 @@ export default async (req) => {
   let body;
   try { body = JSON.parse(raw); } catch { return json({ error: "bad_json" }, 400); }
 
-  const mode = MODES.includes(body.mode) ? body.mode : "scene";
+  const mode = MODES.includes(body.mode) ? body.mode : "auto";
   const question = clean(body.question, 300);
   if (mode === "ask" && !question) return json({ error: "no_question" }, 400);
 
@@ -102,8 +110,8 @@ export default async (req) => {
   const result = await gemini(VISION_MODELS(), {
     systemInstruction: { parts: [{ text: BASE }] },
     contents: [{ role: "user", parts: [{ inline_data: { mime_type: "image/jpeg", data: image } }, { text: prompt }] }],
-    generationConfig: { temperature: 0.2, maxOutputTokens: 600, responseMimeType: "application/json", responseSchema: SCHEMA, thinkingConfig: { thinkingBudget: 0 } },
-  });
+    generationConfig: { temperature: 0.2, maxOutputTokens: 450, responseMimeType: "application/json", responseSchema: SCHEMA, thinkingConfig: { thinkingBudget: 0 } },
+  }, 10000);
   if (result.error) return json({ error: result.error }, result.error === "not_configured" ? 503 : 502);
 
   let parsed;

@@ -19,26 +19,24 @@ The Gemini key stays on the server. It is never in the page or in GitHub.
 4. **Turn on billing for the Gemini API key in Google AI Studio before the finals.** The free tier will hit its limit when many people scan at once, and the voice models may need a paid tier.
 
 ## Before the finals (important)
-1. Open `https://dishari-ai.netlify.app/?warm=1` once. It runs every sample through the AI and creates the voices, then caches them, so sample taps are instant for everyone. The progress shows under the pilot form.
+1. Sample photos need no AI call: their Bangla text and voice are stored in `site/samples/audio/` and inside `index.html`, so a tap shows and speaks instantly, even on weak Wi-Fi.
 2. Tap each sample on an iPhone and an Android phone and confirm you hear the voice.
 3. Take a real photo on both phones in each mode.
 
 ## Adding sample photos
-Put the photo in `site/samples/` and add one line to the `SAMPLES` list in `site/index.html` (id, file, mode, Bangla and English titles, a short demo answer, photo credit). Also add the same id and file to `SAMPLES` in `netlify/functions/vision.mjs`. Then open `/?warm=1` again.
+Put the photo in `site/samples/`, add the same id and file to `SAMPLES` in `netlify/functions/vision.mjs`, and add an entry to `SAMPLES` in `site/index.html` with the AI's answer (`pre`). Generate the voice files `site/samples/audio/<id>-bn.mp3` and `<id>-en.mp3` from `/api/tts`. (Claude can do this for you.)
 
-Slots already prepared in `vision.mjs`: `taka-500`, `taka-100`, `sign`, `obstacle`, `indoor`.
+The app has 7 samples: Dhaka street, rickshaws, Farmgate metro, shop signs, Prothom Alo newspaper, sand on the footpath, and the 1,000 taka note.
 
 ## How answers are labelled
 - **Live AI**: analysed now by Gemini.
-- **AI analysis (prepared)**: a sample photo the AI analysed earlier (cached), shown instantly.
-- **Sample demo**: shown only if the AI is unreachable; written by the team, clearly labelled.
+- **AI analysis (prepared)**: a sample photo the AI analysed earlier; the answer and voice are stored with the site and shown instantly.
 
 ## Pilot sign-ups
 The "Join the DISHARI pilot" form uses Netlify Forms. Submissions appear in Netlify > Forms > pilot.
 
 ## Finals checklist
 - [ ] Billing on for the Gemini key
-- [ ] `/?warm=1` finished with every sample "Warmed"
 - [ ] Voice heard on iPhone (Safari) and Android (Chrome)
 - [ ] Live photo works in all four modes
 - [ ] 500 and 100 taka notes recognised from your own photos
