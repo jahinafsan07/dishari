@@ -8,7 +8,7 @@ const wavResponse = (buf, source, type = "audio/wav") =>
 
 export default async (req) => {
   if (req.method !== "POST") return json({ error: "method" }, 405);
-  if (rateLimited(req, 30)) return json({ error: "rate_limited" }, 429);
+  if (rateLimited(req, 200)) return json({ error: "rate_limited" }, 429);
 
   let body;
   try { body = await req.json(); } catch { return json({ error: "bad_json" }, 400); }

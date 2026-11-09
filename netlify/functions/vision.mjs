@@ -12,7 +12,7 @@ const SAMPLES = {
   "prothomalo": "/samples/prothomalo.jpg",
   "footpath-obstacle": "/samples/footpath-obstacle.jpg",
 };
-const MODES = ["auto", "scene", "taka", "text", "obstacle", "ask"];
+const MODES = ["auto", "live", "scene", "taka", "text", "obstacle", "ask"];
 const MAX_BODY = 3_500_000;
 
 const BASE = `You are DISHARI, an assistive vision companion for blind and visually impaired people in Bangladesh.
@@ -24,6 +24,7 @@ Rules:
 - If the photo is too dark, blurry or unclear for the task, set confident to false and politely ask the user to take the photo again.`;
 
 const TASK = {
+  live: `Task: this is one frame from a live video the user is filming while moving. In one or two very short spoken Bangla sentences, say what is in front of the user right now, putting anything safety-relevant first (vehicles, people close by, steps, holes, obstacles). If a Bangladeshi banknote fills the view, just say its value; if readable text is the main thing, read it briefly. If a previous description is given and nothing important has changed, set changed to false and keep say_bn very short. Never repeat the previous description word for word.`,
   auto: `Task: first decide what the photo mainly shows, then answer in that way.
 (a) Bangladeshi taka banknote(s): list each clearly visible note's value in notes (for example [500]); if unsure, notes = [] and confident = false. Never judge if a note is genuine.
 (b) Mainly text (a sign, document, label, newspaper or screen): start say_bn with "এখানে লেখা আছে:" and read the main text as written; do not guess hidden words. For a newspaper, read the name and the main headlines.
@@ -45,6 +46,7 @@ const SCHEMA = {
     warning: { type: "STRING" },
     confident: { type: "BOOLEAN" },
     notes: { type: "ARRAY", items: { type: "INTEGER" } },
+    changed: { type: "BOOLEAN" },
   },
   required: ["say_bn", "say_en", "confident"],
 };
@@ -59,10 +61,11 @@ export function shape(mode, raw) {
     items: Array.isArray(raw.items) ? raw.items.map((x) => clean(x, 120)).filter(Boolean).slice(0, 12) : [],
     warning: clean(raw.warning, 200),
     confident: raw.confident !== false,
+    changed: raw.changed !== false,
   };
-  if (mode === "auto") {
+  if (mode === "auto" || mode === "live") {
     const t = raw.confident === false ? null : takaSentences(raw.notes);
-    if (t) Object.assign(out, { say_bn: t.bn, say_en: t.en, notes: t.notes, total: t.total, mode: "taka" });
+    if (t) Object.assign(out, { say_bn: t.bn, say_en: t.en, notes: t.notes, total: t.total, mode: mode === "live" ? "live" : "taka" });
   }
   if (mode === "taka") {
     const t = raw.confident === false ? null : takaSentences(raw.notes);
@@ -84,7 +87,7 @@ async function loadSample(req, id) {
 export default async (req) => {
   if (req.method === "GET") return json({ ok: Boolean(process.env.GEMINI_API_KEY) });
   if (req.method !== "POST") return json({ error: "method" }, 405);
-  if (rateLimited(req, 20)) return json({ error: "rate_limited" }, 429);
+  if (rateLimited(req, 120)) return json({ error: "rate_limited" }, 429);
 
   const raw = await req.text();
   if (raw.length > MAX_BODY) return json({ error: "too_large" }, 413);
@@ -106,7 +109,8 @@ export default async (req) => {
   if (!image && sampleId) image = await loadSample(req, sampleId);
   if (!image || image.length < 1000) return json({ error: "no_image" }, 400);
 
-  const prompt = mode === "ask" ? `${TASK.ask}\nUser question: ${question}` : TASK[mode];
+  const previous = clean(body.previous, 400);
+  const prompt = mode === "ask" ? `${TASK.ask}\nUser question: ${question}` : mode === "live" && previous ? `${TASK.live}\nPrevious description: ${previous}` : TASK[mode];
   const result = await gemini(VISION_MODELS(), {
     systemInstruction: { parts: [{ text: BASE }] },
     contents: [{ role: "user", parts: [{ inline_data: { mime_type: "image/jpeg", data: image } }, { text: prompt }] }],
