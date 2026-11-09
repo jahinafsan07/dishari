@@ -79,6 +79,17 @@ form.pilot input{border:1.5px solid var(--line);border-radius:12px;padding:12px;
 .hidden{position:absolute!important;left:-9999px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 :focus-visible{outline:3px solid #F5B041;outline-offset:2px;border-radius:10px}
+.livebtn{width:100%;margin-top:10px;background:var(--navy);color:#fff}
+#live{display:none}
+.vidwrap{position:relative;border-radius:18px;overflow:hidden;background:#0f1a3d;margin-top:12px}
+.vidwrap video{width:100%;max-height:52vh;object-fit:cover;display:block}
+.livetag{position:absolute;top:10px;left:10px;background:rgba(15,23,42,.8);color:#fff;font-size:.8em;font-weight:700;border-radius:999px;padding:4px 10px;display:flex;gap:6px;align-items:center}
+.livetag i{width:9px;height:9px;border-radius:50%;background:#EF4444;display:inline-block;animation:pulse 1s infinite}
+.cap{background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px 16px;margin-top:10px;min-height:92px}
+.cap p{margin:4px 0 0;font-size:1.2em;line-height:1.5}
+.cap small{color:var(--muted)}
+.hist{margin-top:8px;font-size:.85em;color:var(--muted)}
+.hist div{padding:4px 0;border-top:1px dashed var(--line)}
 footer{color:var(--muted);font-size:.8em;margin-top:22px;text-align:center}
 @media (prefers-reduced-motion:reduce){.dot{animation:none}*{scroll-behavior:auto!important}}
 </style>
@@ -96,18 +107,18 @@ footer{color:var(--muted);font-size:.8em;margin-top:22px;text-align:center}
   <!-- HOME -->
   <section id="home" aria-labelledby="h1">
     <h1 id="h1" data-t="title"></h1>
-    <p class="sub" data-t="subtitle"></p>
     <div id="demoBanner" class="banner" hidden data-t="demoBanner"></div>
-
-    <div class="grid" id="samples" aria-label="Sample photos"></div>
-
-    <h2 data-t="tryOwn"></h2>
     <div class="actions">
       <label class="btn primary" for="cam"><span aria-hidden="true">📷</span><span data-t="takePhoto"></span></label>
       <label class="btn secondary" for="gal"><span aria-hidden="true">🖼️</span><span data-t="upload"></span></label>
     </div>
+    <button class="btn livebtn" id="liveBtn" type="button"><span aria-hidden="true">🎥</span><span data-t="liveStart"></span></button>
     <input id="cam" class="hidden" type="file" accept="image/*" capture="environment">
     <input id="gal" class="hidden" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/*">
+
+    <h2 data-t="howTitle"></h2>
+    <p class="sub" data-t="subtitle"></p>
+    <div class="grid" id="samples" aria-label="Sample photos"></div>
 
     <p class="note" data-t="privacy"></p>
 
@@ -121,6 +132,20 @@ footer{color:var(--muted);font-size:.8em;margin-top:22px;text-align:center}
       <div id="pilotMsg" role="status" class="note"></div>
     </form>
     <footer><span data-t="footer"></span><br><span id="credits"></span></footer>
+  </section>
+
+  <!-- LIVE VIDEO -->
+  <section id="live" aria-labelledby="ltitle">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
+      <button class="pill" id="liveBack" data-t="back"></button>
+      <span><span class="tag tmode" data-t="liveTag"></span><span class="tag live" data-t="live"></span></span>
+    </div>
+    <h2 id="ltitle" class="sr" data-t="liveTag"></h2>
+    <div class="vidwrap"><video id="vid" playsinline muted autoplay></video><div class="livetag"><i></i><span data-t="liveOn"></span></div></div>
+    <div class="cap" aria-live="polite"><small id="lstat"></small><p id="lcap"></p></div>
+    <div class="audio"><button class="btn secondary" id="liveStop"><span aria-hidden="true">■</span><span data-t="liveStop"></span></button></div>
+    <div class="hist" id="lhist"></div>
+    <p class="note" data-t="liveNote"></p>
   </section>
 
   <!-- RESULT -->
@@ -168,7 +193,7 @@ footer{color:var(--muted);font-size:.8em;margin-top:22px;text-align:center}
 // ---------- text ----------
 const T = {
   bn: {
-    title: 'দিশারীর চোখে <span>দেখুন</span>', subtitle: 'নিচে যেকোনো একটা ছবি সিলেক্ট করুন। দিশারী বাংলায় বলে দেবে কী আছে।', tryOwn: 'নতুন ছবি দিয়ে চেষ্টা করি?',
+    title: 'দিশারীর চোখে <span>দেখুন</span>', subtitle: 'নিচে যেকোনো একটা ছবি সিলেক্ট করুন। দিশারী বাংলায় বলে দেবে কী আছে।', howTitle: 'দেখি দিশারী কেমনে কাজ করে', liveStart: 'লাইভ ভিডিও চালু করুন', liveTag: 'লাইভ ভিডিও', liveOn: 'লাইভ', liveStop: 'থামান', liveLooking: 'দিশারী দেখছে…', liveSpeaking: 'বলছে…', liveSame: 'আগের মতোই আছে', liveNoCam: 'ক্যামেরা চালু করা যায়নি। ক্যামেরার অনুমতি দিন, অথবা ছবি তুলুন।', liveEnded: 'লাইভ ভিডিও বন্ধ হয়েছে। আবার চালু করতে পারেন।', liveNote: 'ফোনটি সামনে ধরে ধীরে হাঁটুন বা ঘুরান। দিশারী নিজে থেকেই বলে যাবে সামনে কী আছে। এটি ডেমো; চলাফেরায় সাদা ছড়ি ব্যবহার চালিয়ে যান।',
     chooseMode: '১. কী জানতে চান?', m_scene: 'চারপাশ', m_taka: 'টাকা চিনুন', m_text: 'লেখা পড়ুন', m_obstacle: 'বাধা খুঁজুন',
     takePhoto: 'ছবি তুলুন', upload: 'গ্যালারি থেকে', trySamples: '২. অথবা ঢাকার নমুনা ছবিতে চেষ্টা করুন',
     privacy: 'আপনার ছবি শুধু বিশ্লেষণের জন্য AI-তে পাঠানো হয় এবং আমরা তা সংরক্ষণ করি না। এটি একটি ডেমো, তাই চলাফেরায় আপনার সাদা ছড়ি বা অন্যান্য সহায়ক ব্যবহার চালিয়ে যান।',
@@ -187,7 +212,7 @@ const T = {
     larger: 'বড় লেখা', micNo: 'এই ব্রাউজারে কণ্ঠে প্রশ্ন করা যায় না। লিখে প্রশ্ন করুন।', micOn: 'বলুন, শুনছি…',
   },
   en: {
-    title: 'See through <span>DISHARI</span>', subtitle: 'Pick any photo below. DISHARI tells you in Bangla what is in it.', tryOwn: 'Try with a new photo?',
+    title: 'See through <span>DISHARI</span>', subtitle: 'Pick any photo below. DISHARI tells you in Bangla what is in it.', howTitle: 'See how DISHARI works', liveStart: 'Start live video', liveTag: 'Live video', liveOn: 'LIVE', liveStop: 'Stop', liveLooking: 'DISHARI is looking…', liveSpeaking: 'Speaking…', liveSame: 'No big change', liveNoCam: 'Could not open the camera. Allow camera access, or take a photo instead.', liveEnded: 'Live video stopped. You can start it again.', liveNote: 'Hold the phone in front of you and move slowly. DISHARI keeps describing what is ahead on its own. This is a demo; keep using your white cane.',
     chooseMode: '1. What do you want to know?', m_scene: 'Surroundings', m_taka: 'Taka notes', m_text: 'Read text', m_obstacle: 'Obstacles',
     takePhoto: 'Take a photo', upload: 'Upload image', trySamples: '2. Or try a Dhaka sample image',
     privacy: 'Your photo is sent to the AI only for analysis and is not stored by us. This is a demo; keep using your white cane or usual mobility aids.',
@@ -279,6 +304,7 @@ function renderQuick() {
 function show(view) {
   $('home').style.display = view === 'home' ? 'block' : 'none';
   $('result').style.display = view === 'result' ? 'block' : 'none';
+  $('live').style.display = view === 'live' ? 'block' : 'none';
   window.scrollTo(0, 0);
   if (view === 'result') $('backBtn').focus({ preventScroll: true });
 }
@@ -454,6 +480,72 @@ $('micBtn').addEventListener('click', () => {
   rec.onerror = () => { $('astat').textContent = t('micNo'); };
   try { rec.start(); } catch { $('astat').textContent = t('micNo'); }
 });
+
+// ---------- live video: automatic, continuous Bangla description ----------
+const LIVE = { on: false, stream: null, last: '', lastThumb: null, lastTime: 0, count: 0, started: 0, MAX: 24, MAX_MS: 180000 };
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+function frame(max) {
+  const v = $('vid'); const w = v.videoWidth, h = v.videoHeight; if (!w) return null;
+  const k = Math.min(1, max / Math.max(w, h)); const c = document.createElement('canvas'); c.width = Math.round(w * k); c.height = Math.round(h * k);
+  c.getContext('2d').drawImage(v, 0, 0, c.width, c.height); return c;
+}
+function thumb() { const c = frame(32); if (!c) return null; const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; const g = []; for (let i = 0; i < d.length; i += 4) g.push((d[i] + d[i + 1] + d[i + 2]) / 3); return g; }
+function diff(a, b) { if (!a || !b || a.length !== b.length) return 255; let s = 0; for (let i = 0; i < a.length; i++) s += Math.abs(a[i] - b[i]); return s / a.length; }
+function speakWait(text, sl) {
+  return new Promise(async (resolve) => {
+    try {
+      const r = await fetch('/api/tts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, lang: sl }) });
+      if (!r.ok) throw 0;
+      if (audioUrl) URL.revokeObjectURL(audioUrl);
+      audioUrl = URL.createObjectURL(await r.blob()); player.src = audioUrl;
+      player.onended = () => resolve(); player.onerror = () => resolve();
+      await player.play();
+    } catch (e) {
+      if ('speechSynthesis' in window) { const v = speechSynthesis.getVoices().find((x) => x.lang && x.lang.toLowerCase().startsWith(sl)); if (v || sl === 'en') { const u = new SpeechSynthesisUtterance(text); if (v) u.voice = v; u.onend = () => resolve(); u.onerror = () => resolve(); speechSynthesis.speak(u); return; } }
+      setTimeout(resolve, 2500);
+    }
+  });
+}
+async function startLive() {
+  unlockAudio(); stopAudio();
+  show('live'); $('lcap').textContent = ''; $('lhist').innerHTML = ''; $('lstat').textContent = t('liveLooking');
+  try {
+    LIVE.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } }, audio: false });
+  } catch (e) { $('lstat').textContent = ''; $('lcap').textContent = t('liveNoCam'); return; }
+  const v = $('vid'); v.srcObject = LIVE.stream; try { await v.play(); } catch (e) {}
+  Object.assign(LIVE, { on: true, last: '', lastThumb: null, lastTime: 0, count: 0, started: Date.now() });
+  liveLoop();
+}
+function stopLive(msg) {
+  LIVE.on = false; stopAudio();
+  if (LIVE.stream) { LIVE.stream.getTracks().forEach((tr) => tr.stop()); LIVE.stream = null; }
+  if (msg) { $('lstat').textContent = ''; $('lcap').textContent = msg; }
+}
+async function liveLoop() {
+  await sleep(700);
+  while (LIVE.on) {
+    if (LIVE.count >= LIVE.MAX || Date.now() - LIVE.started > LIVE.MAX_MS) { stopLive(t('liveEnded')); break; }
+    const th = thumb();
+    if (LIVE.lastThumb && diff(th, LIVE.lastThumb) < 9 && Date.now() - LIVE.lastTime < 10000) { await sleep(1200); continue; }
+    const c = frame(768); if (!c) { await sleep(500); continue; }
+    $('lstat').textContent = t('liveLooking');
+    let d;
+    try { d = await api({ mode: 'live', image: c.toDataURL('image/jpeg', 0.72).split(',')[1], previous: LIVE.last }, 20000); }
+    catch (e) { $('lstat').textContent = e.code === 'rate_limited' ? t('errBusy') : t('errGeneric'); await sleep(4000); continue; }
+    if (!LIVE.on) break;
+    LIVE.lastThumb = th; LIVE.lastTime = Date.now(); LIVE.count++;
+    const text = lang === 'bn' ? d.say_bn : (d.say_en || d.say_bn);
+    if (d.changed === false && LIVE.last) { $('lstat').textContent = t('liveSame'); await sleep(1500); continue; }
+    if (LIVE.last) { const h = document.createElement('div'); h.textContent = $('lcap').textContent; $('lhist').prepend(h); while ($('lhist').children.length > 3) $('lhist').lastChild.remove(); }
+    LIVE.last = d.say_bn; $('lcap').textContent = text; $('lstat').textContent = t('liveSpeaking');
+    await speakWait(text, lang === 'bn' || !d.say_en ? 'bn' : 'en');
+    await sleep(600);
+  }
+}
+$('liveBtn').addEventListener('click', startLive);
+$('liveStop').addEventListener('click', () => stopLive(t('liveEnded')));
+$('liveBack').addEventListener('click', () => { stopLive(); show('home'); });
+document.addEventListener('visibilitychange', () => { if (document.hidden && LIVE.on) stopLive(t('liveEnded')); });
 
 // ---------- navigation and settings ----------
 
